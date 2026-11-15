@@ -83,7 +83,34 @@ $("loginForm").addEventListener("submit",async(event)=>{
   } catch(error) {$("loginStatus").textContent=error.message;$("loginStatus").className="status err";}
 });
 $("beginBtn").addEventListener("click",async()=>{try{await api("/api/admin/iniciar",{method:"POST"});await refreshStatus();}catch(e){$("adminState").textContent=e.message;}});
-$("endBtn").addEventListener("click",async()=>{if(!confirm("Tem certeza de que deseja encerrar a prova?"))return;try{await api("/api/admin/encerrar",{method:"POST"});await refreshStatus();}catch(e){$("adminState").textContent=e.message;}});
+$("endBtn").addEventListener("click",async()=>{
+  if(!confirm("Tem certeza de que deseja encerrar a prova e baixar o arquivo com todas as respostas?")) return;
+  const botao=$("endBtn");
+  botao.disabled=true;
+  try {
+    await api("/api/admin/encerrar",{method:"POST"});
+    await refreshStatus();
+    const resposta=await fetch(API_BASE+"/api/admin/exportar",{credentials:"include"});
+    if(!resposta.ok) {
+      const erro=await resposta.json().catch(()=>({}));
+      throw new Error(erro.erro || "A prova foi encerrada, mas não foi possível baixar o arquivo.");
+    }
+    const arquivo=await resposta.blob();
+    const url=URL.createObjectURL(arquivo);
+    const link=document.createElement("a");
+    link.href=url;
+    link.download="respostas-da-prova.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    $("adminState").textContent="Prova encerrada. O arquivo com todas as respostas foi baixado.";
+    $("adminState").className="status ok";
+  } catch(e) {
+    $("adminState").textContent=e.message;
+    $("adminState").className="status err";
+  } finally { botao.disabled=false; }
+});
 $("resultsBtn").addEventListener("click",async()=>{try{const rows=await api("/api/admin/participantes");$("results").textContent=JSON.stringify(rows,null,2);}catch(e){$("results").textContent=e.message;}});
 $("logoutBtn").addEventListener("click",async()=>{try{await api("/api/admin/logout",{method:"POST"});}catch(e){}loggedIn=false;$("adminPanel").hidden=true;$("loginPanel").hidden=true;});
 $("startExam").addEventListener("click",()=>{$("examPanel").hidden=false;$("startExam").disabled=true;$("examPanel").scrollIntoView({behavior:"smooth",block:"start"});});
