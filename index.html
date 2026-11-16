@@ -43,6 +43,8 @@ footer{text-align:center;color:#7486a2;padding:30px;font-size:13px}.admin-link{b
   Não coloque senhas neste arquivo.
 */
 const API_BASE = "https://examine-medication-brooks-human.trycloudflare.com";
+// Atalho para localizar elementos pelo ID; estava faltando e causava "$ is not defined".
+const $ = (id) => document.getElementById(id);
 let loggedIn = false;
 let alertasDeFoco = 0;
 let provaEmAndamento = false;
